@@ -1,5 +1,3 @@
-set buftype=nofile
-
 function! GetMPCStatusLine()
   let cmd = "mpc status"
   let result = split(system(cmd), "\n")
@@ -19,3 +17,6 @@ function! GetMPCStatusLine()
 endfunction
 
 setlocal statusline=%!GetMPCStatusLine()
+set buftype=nofile
+set conceallevel=3
+set concealcursor=nvic
