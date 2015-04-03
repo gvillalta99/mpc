@@ -5,6 +5,12 @@ syntax region mpdAlbum matchgroup=mpdAlbumSyn
 syntax region mpdTitle matchgroup=mpdTitleSyn
       \ start=/@ti/ end=/ti@/ contains=mpdTitle concealends
 
-highlight default mpdArtist ctermbg=234 ctermfg=lightgreen 
-highlight default mpdArtist ctermbg=234 ctermfg=lightblue
-highlight default mpdArtist ctermbg=234 ctermfg=lightmagenta 
+highlight! default mpdArtist
+      \ ctermbg=234 ctermfg=lightgreen 
+      \ guibg=#1c1c1c guifg=#5fff87
+highlight! default mpdArtist
+      \ ctermbg=234 ctermfg=lightblue
+      \ guibg=#1c1c1c guifg=#5fd7ff
+highlight! default mpdArtist
+      \ ctermbg=234 ctermfg=lightmagenta 
+      \ guibg=#1c1c1c guifg=#ffafff
