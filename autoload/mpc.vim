@@ -14,15 +14,13 @@ function! mpc#DisplayPlaylist() abort
 endfunction
 
 function! mpc#GetPlaylist() abort
-  let cmd = "mpc --format '%position% @%artist% @%album% @%title%' playlist"
-  let results = split(system(cmd), '\n')
+  let results = mpc#playlist()
   let playlist = []
   let maxLengths = {'position': [], 'artist': [], 'album': []}
 
   for item in results
-    call add(playlist, mpc#EncodeSong(item))
+    call add(playlist, mpc#encodeSong(item))
   endfor
-
 
   for track in playlist
     call add(maxLengths.position, len(track.position))
@@ -59,7 +57,7 @@ function! mpc#PlaySong(no) abort
   echomsg message
 endfunction
 
-function! mpc#EncodeSong(item)
+function! mpc#encodeSong(item)
   let item = split(a:item, " @")
   let song = {'position': item[0],
         \ 'artist': '@ar' . item[1] . 'ar@',
@@ -68,7 +66,7 @@ function! mpc#EncodeSong(item)
   return song
 endfunction
 
-function! mpc#DecodeSong(item)
+function! mpc#decodeSong(item)
   let line_items = split(substitute(a:item, ' \{2, }', ' ', 'g'), ' @')
   let song = {'position': line_items[0],
         \ 'artist': line_items[1][2:-4],
@@ -109,6 +107,9 @@ endfunction
 " mpc#execute(options, command, arguments)
 "
 " Executes the command line program *mpc*
+"
+" returns [] if an error has happend
+" returns a list of strings that corresponds to the output of the mpc command
 function! mpc#execute(options, command, arguments) abort
   let cmd       = "mpc "
   let command   = a:command
@@ -131,6 +132,12 @@ endfunction
 " mpc#verifyError(result)
 "
 " Verifies if the result was an error
+"
+" 0 -> false
+" 1 -> true
+"
+" returns true if has a error
+" returns false otherwise
 function! mpc#hasError(result) abort
   if type(a:result) == type([])
     return mpc#hasError(a:result[0])
@@ -143,7 +150,7 @@ endfunction
 
 " mpc#playlist()
 "
-" Returns the current playlist
+" returns a list of string that corresponds to the current playlist
 function! mpc#playlist() abort
   let options   = ["--format '%position% @%artist% @%album% @%title%'"]
   let command   = "playlist"
