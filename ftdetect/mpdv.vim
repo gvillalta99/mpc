@@ -1,1 +1,1 @@
-au BufRead,BufNewFile *.mpdv set filetype=mpdv
+au BufRead,BufNew,BufNewFile *.mpdv set filetype=mpdv
