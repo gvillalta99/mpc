@@ -1,21 +1,19 @@
-function! mpc#DisplayPlaylist()
+function! mpc#DisplayPlaylist() abort
   let playlist = mpc#GetPlaylist()
-
+  let itemlist = []
+  
   for track in playlist
     let output = track.position . " "
           \ . track.artist
           \ . track.album
           \ . track.title
-
-    if(playlist[0].position == track.position)
-      execute "normal! 1GdGI" . output
-    else
-      call append(line('$'), output)
-    endif
+    call add(itemlist, output)
   endfor
+
+  call mpc#insertListIntoBuffer(itemlist)
 endfunction
 
-function! mpc#GetPlaylist()
+function! mpc#GetPlaylist() abort
   let cmd = "mpc --format '%position% @%artist% @%album% @%title%' playlist"
   let results = split(system(cmd), '\n')
   let playlist = []
@@ -53,7 +51,7 @@ function! mpc#GetPlaylist()
   return playlist
 endfunction
 
-function! mpc#PlaySong(no)
+function! mpc#PlaySong(no) abort
   let song = split(getline(a:no), " ")
   let results = split(system("mpc --format '%title% (%artist%)' play " . song[0]), "\n")
   let message = '[mpc] Now Playing: ' . results[0]
@@ -106,4 +104,72 @@ function! mpc#ToggleRepeat()
   let message = status == "repeat: off" ? '[mpc] Repeat: off' : '[mpc] Repeat: on'
 
   echomsg message
+endfunction
+
+" mpc#execute(options, command, arguments)
+"
+" Executes the command line program *mpc*
+function! mpc#execute(options, command, arguments) abort
+  let cmd       = "mpc "
+  let command   = a:command
+  let options   = join(a:options, " ")
+  let arguments = join(a:arguments, " ")
+  let params = options . " " . command . " " . arguments
+
+  let message = "[mpc] " . params
+  let result = split(system(cmd . params), "\n") 
+  if mpc#hasError(result)
+    echomsg message . " -- ERROR"
+    echomsg result[0]
+    return []
+  else
+    echomsg message
+    return result
+  endif
+endfunction
+
+" mpc#verifyError(result)
+"
+" Verifies if the result was an error
+function! mpc#hasError(result) abort
+  if type(a:result) == type([])
+    return mpc#hasError(a:result[0])
+  elseif type(a:result) == type(" ")
+    return a:result =~# '^error:'
+  else
+    return 0
+  endif
+endfunction
+
+" mpc#playlist()
+"
+" Returns the current playlist
+function! mpc#playlist() abort
+  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
+  let command   = "playlist"
+  let arguments = []
+  let playlist  = mpc#execute(options, command, arguments)
+  return playlist
+endfunction
+
+" mpc#appendListToBuffer(itemlist)
+"
+" Append all the items in the `itemlist` to curent buffer
+function! mpc#appendListToBuffer(itemlist) abort
+  for item in a:itemlist
+    call append(line('$'), item)
+  endfor
+endfunction
+
+" mpc#insertListIntoBuffer(itemlist)
+"
+" Clear the current buffer and insert all the items into it
+function! mpc#insertListIntoBuffer(itemlist) abort
+  for item in a:itemlist
+    if(item == a:itemlist[0])
+      execute "normal! 1GdGI" . item
+    else
+      call append(line('$'), item)
+    endif
+  endfor
 endfunction
