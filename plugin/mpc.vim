@@ -12,3 +12,10 @@ function! OpenMPC()
   endif
   call mpc#DisplayPlaylist()
 endfunction
+
+function! LargestNumber(no1, no2)
+  return a:no1 == a:no2 ? 0 : a:no1 > a:no2 ? 1 : -1
+endfunction
+
+command! TogglePlayback call mpc#TogglePlayback()
+command! MpcBrowser call OpenMPC()

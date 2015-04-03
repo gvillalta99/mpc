@@ -20,3 +20,5 @@ setlocal statusline=%!GetMPCStatusLine()
 set buftype=nofile
 set conceallevel=3
 set concealcursor=nvic
+
+command! -buffer PlaySelectedSong call mpc#PlaySong(line('.'))

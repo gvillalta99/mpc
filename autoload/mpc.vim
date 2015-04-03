@@ -61,10 +61,6 @@ function! mpc#PlaySong(no)
   echomsg message
 endfunction
 
-function! LargestNumber(no1, no2)
-  return a:no1 == a:no2 ? 0 : a:no1 > a:no2 ? 1 : -1
-endfunction
-
 function! mpc#EncodeSong(item)
   let item = split(a:item, " @")
   let song = {'position': item[0],
@@ -81,4 +77,13 @@ function! mpc#DecodeSong(item)
         \ 'album':  line_items[2][2:-4],
         \ 'title':  line_items[3][2:-4]}
   return song
+endfunction
+
+function! mpc#TogglePlayback()
+  let cmd = 'mpc toggle'
+  let result = split(system(cmd), '\n')[1]
+
+  let message = '[mpc] '
+  let message .= split(result, ' ')[0] == '[paused]' ? 'Paused' : 'Playing'
+  echomsg message
 endfunction

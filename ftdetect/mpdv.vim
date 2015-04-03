@@ -1,1 +1,1 @@
-autocmd BufRead,BufNewFile *.mpdv set filetype=mpdv
+au BufRead,BufNewFile *.mpdv set filetype=mpdv
