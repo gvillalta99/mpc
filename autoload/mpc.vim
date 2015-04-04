@@ -10,12 +10,8 @@ function! mpc#DisplayPlaylist() abort
   let playlist = mpc#formatPlaylist(mpc#playlist())
   let itemlist = []
 
-  for track in playlist
-    let output = track.position
-          \ . track.artist
-          \ . track.album
-          \ . track.title
-    call add(itemlist, output)
+  for song in playlist
+    call add(itemlist, join(mpc#songToArray(song), " "))
   endfor
 
   call mpc#insertListIntoBuffer(itemlist)
@@ -227,4 +223,9 @@ function! mpc#playlist() abort
   endif
 
   return playlist
+endfunction
+
+function! mpc#songToArray(song) abort
+  let song_array = [a:song.position, a:song.artist, a:song.album, a:song.title]
+  return song_array
 endfunction
