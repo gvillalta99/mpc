@@ -1,3 +1,11 @@
+" Data Structures:
+"   Song:
+"   { position: string,
+"     artist:   string,
+"     album:    string,
+"     title:    string}
+"
+
 function! mpc#DisplayPlaylist() abort
   let playlist = mpc#GetPlaylist()
   let itemlist = []
@@ -14,12 +22,12 @@ function! mpc#DisplayPlaylist() abort
 endfunction
 
 function! mpc#GetPlaylist() abort
-  let results = mpc#playlist()
+  let songs= mpc#playlist()
   let playlist = []
   let maxLengths = {'position': [], 'artist': [], 'album': []}
 
-  for item in results
-    call add(playlist, mpc#encodeSong(item))
+  for song in songs
+    call add(playlist, mpc#formatSong(song))
   endfor
 
   for track in playlist
@@ -57,24 +65,6 @@ function! mpc#PlaySong(no) abort
   echomsg message
 endfunction
 
-function! mpc#encodeSong(item)
-  let item = split(a:item, " @")
-  let song = {'position': item[0],
-        \ 'artist': '@ar' . item[1] . 'ar@',
-        \ 'album': '@al'  . item[2] . 'al@',
-        \ 'title': '@ti'  . item[3] . 'ti@',}
-  return song
-endfunction
-
-function! mpc#decodeSong(item)
-  let line_items = split(substitute(a:item, ' \{2, }', ' ', 'g'), ' @')
-  let song = {'position': line_items[0],
-        \ 'artist': line_items[1][2:-4],
-        \ 'album':  line_items[2][2:-4],
-        \ 'title':  line_items[3][2:-4]}
-  return song
-endfunction
-
 function! mpc#TogglePlayback()
   let cmd = 'mpc toggle'
   let result = split(system(cmd), '\n')[1]
@@ -104,6 +94,15 @@ function! mpc#ToggleRepeat()
   echomsg message
 endfunction
 
+" mpc#appendListToBuffer(itemlist)
+"
+" Append all the items in the `itemlist` to curent buffer
+function! mpc#appendListToBuffer(itemlist) abort
+  for item in a:itemlist
+    call append(line('$'), item)
+  endfor
+endfunction
+
 " mpc#execute(options, command, arguments)
 "
 " Executes the command line program *mpc*
@@ -129,7 +128,36 @@ function! mpc#execute(options, command, arguments) abort
   endif
 endfunction
 
-" mpc#verifyError(result)
+" mpc#extractSongFromString(line)
+"
+" returns a Song data structure from line
+function! mpc#extractSongFromString(line) abort
+  let item = split(a:line, " @")
+  let song = {'position': item[0],
+        \     'artist':   item[1],
+        \     'album':    item[2],
+        \     'title':    item[3]}
+  return song
+endfunction
+
+" mpc#formatSong(song)
+"
+" returns a Song data structure with its fields formated
+function! mpc#formatSong(song) abort
+  let format_elements = { 'b_position': '',    'a_position': '',
+        \                 'b_artist':   '@ar', 'a_artist': 'ar@',
+        \                 'b_album':    '@al', 'a_album':  'al@',
+        \                 'b_title':    '@ti', 'a_title':  'ti@'}
+
+  let song = { 'position': format_elements.b_position . a:song.position . format_elements.a_position,
+        \      'artist':   format_elements.b_artist   . a:song.artist   . format_elements.a_artist,
+        \      'album':    format_elements.b_album    . a:song.album    . format_elements.a_album,
+        \      'title':    format_elements.b_title    . a:song.title    . format_elements.a_title }
+
+  return song
+endfunction
+
+" mpc#hasError(result)
 "
 " Verifies if the result was an error
 "
@@ -140,32 +168,16 @@ endfunction
 " returns false otherwise
 function! mpc#hasError(result) abort
   if type(a:result) == type([])
-    return mpc#hasError(a:result[0])
+    if len(a:result) == 0
+      return 0
+    else
+      return mpc#hasError(a:result[0])
+    endif
   elseif type(a:result) == type(" ")
     return a:result =~# '^error:'
   else
     return 0
   endif
-endfunction
-
-" mpc#playlist()
-"
-" returns a list of string that corresponds to the current playlist
-function! mpc#playlist() abort
-  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
-  let command   = "playlist"
-  let arguments = []
-  let playlist  = mpc#execute(options, command, arguments)
-  return playlist
-endfunction
-
-" mpc#appendListToBuffer(itemlist)
-"
-" Append all the items in the `itemlist` to curent buffer
-function! mpc#appendListToBuffer(itemlist) abort
-  for item in a:itemlist
-    call append(line('$'), item)
-  endfor
 endfunction
 
 " mpc#insertListIntoBuffer(itemlist)
@@ -179,4 +191,23 @@ function! mpc#insertListIntoBuffer(itemlist) abort
       call append(line('$'), item)
     endif
   endfor
+endfunction
+
+" mpc#playlist()
+"
+" returns a list of songs that corresponds to the current playlist
+function! mpc#playlist() abort
+  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
+  let command   = "playlist"
+  let arguments = []
+  let results   = mpc#execute(options, command, arguments)
+  let playlist  = []
+
+  if ! mpc#hasError(results)
+    for line in results
+      call add(playlist, mpc#extractSongFromString(line))
+    endfor
+  endif
+
+  return playlist
 endfunction
