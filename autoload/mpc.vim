@@ -7,11 +7,11 @@
 "
 
 function! mpc#DisplayPlaylist() abort
-  let playlist = mpc#GetPlaylist()
+  let playlist = mpc#formatPlaylist(mpc#playlist())
   let itemlist = []
-  
+
   for track in playlist
-    let output = track.position . " "
+    let output = track.position
           \ . track.artist
           \ . track.album
           \ . track.title
@@ -19,42 +19,6 @@ function! mpc#DisplayPlaylist() abort
   endfor
 
   call mpc#insertListIntoBuffer(itemlist)
-endfunction
-
-function! mpc#GetPlaylist() abort
-  let songs= mpc#playlist()
-  let playlist = []
-  let maxLengths = {'position': [], 'artist': [], 'album': []}
-
-  for song in songs
-    call add(playlist, mpc#formatSong(song))
-  endfor
-
-  for track in playlist
-    call add(maxLengths.position, len(track.position))
-    call add(maxLengths.artist, len(track.artist))
-    call add(maxLengths.album, len(track.album))
-  endfor
-
-  call sort(maxLengths.position, "LargestNumber")
-  call sort(maxLengths.artist, "LargestNumber")
-  call sort(maxLengths.album, "LargestNumber")
-
-  for track in playlist
-    if(maxLengths.position[-1] + 1 > len(track.position))
-      let track.position = repeat(' ',
-            \ maxLengths.position[-1] - len(track.position))
-            \ . track.position
-    endif
-
-    let track.position .= ' '
-
-    let track.artist .= repeat(' ', maxLengths.artist[-1] + 2 - len(track.artist))
-
-    let track.album .= repeat(' ', maxLengths.album[-1] + 2 - len(track.album))
-  endfor
-
-  return playlist
 endfunction
 
 function! mpc#PlaySong(no) abort
@@ -117,7 +81,7 @@ function! mpc#execute(options, command, arguments) abort
   let params = options . " " . command . " " . arguments
 
   let message = "[mpc] " . params
-  let result = split(system(cmd . params), "\n") 
+  let result = split(system(cmd . params), "\n")
   if mpc#hasError(result)
     echomsg message . " -- ERROR"
     echomsg result[0]
@@ -140,6 +104,21 @@ function! mpc#extractSongFromString(line) abort
   return song
 endfunction
 
+" mpc#formatPlaylist(playlist)
+"
+" returns a formated playlist
+function! mpc#formatPlaylist(playlist) abort
+  if len(a:playlist) == 0
+    return []
+  else
+    let formated_playlist = []
+    for song in a:playlist
+      call add(formated_playlist, mpc#formatSong(song))
+    endfor
+    return formated_playlist
+  endif
+endfunction
+
 " mpc#formatSong(song)
 "
 " returns a Song data structure with its fields formated
@@ -148,13 +127,51 @@ function! mpc#formatSong(song) abort
         \                 'b_artist':   '@ar', 'a_artist': 'ar@',
         \                 'b_album':    '@al', 'a_album':  'al@',
         \                 'b_title':    '@ti', 'a_title':  'ti@'}
+  let song_fields_length = { 'position':  5,
+        \                    'artist':   15,
+        \                    'album':    15,
+        \                    'title':    30}
 
-  let song = { 'position': format_elements.b_position . a:song.position . format_elements.a_position,
-        \      'artist':   format_elements.b_artist   . a:song.artist   . format_elements.a_artist,
-        \      'album':    format_elements.b_album    . a:song.album    . format_elements.a_album,
-        \      'title':    format_elements.b_title    . a:song.title    . format_elements.a_title }
+  let raw_song = { 'position': mpc#formatStringField(a:song.position, song_fields_length.position),
+        \          'artist':   mpc#formatStringField(a:song.artist, song_fields_length.artist),
+        \          'album':    mpc#formatStringField(a:song.album, song_fields_length.album),
+        \          'title':    mpc#formatStringField(a:song.title, song_fields_length.title) }
+
+  let song = { 'position': format_elements.b_position . raw_song.position . format_elements.a_position,
+        \      'artist':   format_elements.b_artist   . raw_song.artist   . format_elements.a_artist,
+        \      'album':    format_elements.b_album    . raw_song.album    . format_elements.a_album,
+        \      'title':    format_elements.b_title    . raw_song.title    . format_elements.a_title }
 
   return song
+endfunction
+
+" mpc#formatStringField(string, size) 
+" mpc#formatStringField(string, size, align)
+"
+" returns the string formated to fit field size aligned
+function! mpc#formatStringField(string, size, ...) abort
+  " default value for a:align is 'l'
+  if len(a:000) == 1
+    let align = a:000[0]
+  else 
+    let align = "l"
+  endif
+
+  if len(a:string) > a:size
+    if a:size > 4
+      return a:string[0:(a:size-4)] . ".. "
+    else
+      return a:string[0:(a:size-1)] . " "
+    endif
+  else
+    if align ==? "r"
+      let whitespaces = repeat(' ', a:size - len(a:string) - 1)
+      return whitespaces . a:string . " "
+    else
+      let whitespaces = repeat(' ', a:size - len(a:string))
+      return a:string . whitespaces
+    endif
+  endif
 endfunction
 
 " mpc#hasError(result)
