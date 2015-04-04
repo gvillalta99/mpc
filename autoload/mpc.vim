@@ -1,40 +1,43 @@
-" Data Structures:
-"   Song:
+" Data Structures {{{
+"   Song {{{
 "   { position: string,
 "     artist:   string,
 "     album:    string,
-"     title:    string}
-"
+"     title:    string }
+"     }}}
+"   }}}
 
-function! mpc#DisplayPlaylist() abort
+function! mpc#ViewPlaylist() abort "{{{
   let playlist = mpc#formatPlaylist(mpc#playlist())
   let itemlist = []
+
+  call mpc#newView(len(playlist))
 
   for song in playlist
     call add(itemlist, join(mpc#songToArray(song), " "))
   endfor
 
   call mpc#insertListIntoBuffer(itemlist)
-endfunction
+endfunction "}}}
 
-function! mpc#PlaySong(no) abort
+function! mpc#PlaySong(no) abort "{{{
   let song = split(getline(a:no), " ")
   let results = split(system("mpc --format '%title% (%artist%)' play " . song[0]), "\n")
   let message = '[mpc] Now Playing: ' . results[0]
 
   echomsg message
-endfunction
+endfunction "}}}
 
-function! mpc#TogglePlayback()
+function! mpc#TogglePlayback() "{{{
   let cmd = 'mpc toggle'
   let result = split(system(cmd), '\n')[1]
 
   let message = '[mpc] '
   let message .= split(result, ' ')[0] == '[paused]' ? 'Paused' : 'Playing'
   echomsg message
-endfunction
+endfunction "}}}
 
-function! mpc#ToggleRandom()
+function! mpc#ToggleRandom() "{{{
   let cmd = 'mpc random'
   let result = split(split(system(cmd), '\n')[2], '   ')
 
@@ -42,9 +45,9 @@ function! mpc#ToggleRandom()
   let message = status == "random: off" ? '[mpc] Random: off' : '[mpc] Random: on'
 
   echomsg message
-endfunction
+endfunction "}}}
 
-function! mpc#ToggleRepeat()
+function! mpc#ToggleRepeat() "{{{
   let cmd = 'mpc repeat'
   let result = split(split(system(cmd), '\n')[2], '   ')
 
@@ -52,18 +55,20 @@ function! mpc#ToggleRepeat()
   let message = status == "repeat: off" ? '[mpc] Repeat: off' : '[mpc] Repeat: on'
 
   echomsg message
-endfunction
+endfunction "}}}
 
-" mpc#appendListToBuffer(itemlist)
+" New version of mpc {{{
+
+" mpc#appendListToBuffer(itemlist) {{{
 "
 " Append all the items in the `itemlist` to curent buffer
 function! mpc#appendListToBuffer(itemlist) abort
   for item in a:itemlist
     call append(line('$'), item)
   endfor
-endfunction
+endfunction "}}}
 
-" mpc#execute(options, command, arguments)
+" mpc#execute(options, command, arguments) {{{
 "
 " Executes the command line program *mpc*
 "
@@ -86,9 +91,9 @@ function! mpc#execute(options, command, arguments) abort
     echomsg message
     return result
   endif
-endfunction
+endfunction "}}}
 
-" mpc#extractSongFromString(line)
+" mpc#extractSongFromString(line) {{{
 "
 " returns a Song data structure from line
 function! mpc#extractSongFromString(line) abort
@@ -98,9 +103,9 @@ function! mpc#extractSongFromString(line) abort
         \     'album':    item[2],
         \     'title':    item[3]}
   return song
-endfunction
+endfunction "}}}
 
-" mpc#formatPlaylist(playlist)
+" mpc#formatPlaylist(playlist) {{{
 "
 " returns a formated playlist
 function! mpc#formatPlaylist(playlist) abort
@@ -113,9 +118,9 @@ function! mpc#formatPlaylist(playlist) abort
     endfor
     return formated_playlist
   endif
-endfunction
+endfunction "}}}
 
-" mpc#formatSong(song)
+" mpc#formatSong(song) {{{
 "
 " returns a Song data structure with its fields formated
 function! mpc#formatSong(song) abort
@@ -139,9 +144,9 @@ function! mpc#formatSong(song) abort
         \      'title':    format_elements.b_title    . raw_song.title    . format_elements.a_title }
 
   return song
-endfunction
+endfunction "}}}
 
-" mpc#formatStringField(string, size) 
+" mpc#formatStringField(string, size) {{{
 " mpc#formatStringField(string, size, align)
 "
 " returns the string formated to fit field size aligned
@@ -149,7 +154,7 @@ function! mpc#formatStringField(string, size, ...) abort
   " default value for a:align is 'l'
   if len(a:000) == 1
     let align = a:000[0]
-  else 
+  else
     let align = "l"
   endif
 
@@ -168,9 +173,9 @@ function! mpc#formatStringField(string, size, ...) abort
       return a:string . whitespaces
     endif
   endif
-endfunction
+endfunction "}}}
 
-" mpc#hasError(result)
+" mpc#hasError(result) {{{
 "
 " Verifies if the result was an error
 "
@@ -191,9 +196,9 @@ function! mpc#hasError(result) abort
   else
     return 0
   endif
-endfunction
+endfunction "}}}
 
-" mpc#insertListIntoBuffer(itemlist)
+" mpc#insertListIntoBuffer(itemlist) {{{
 "
 " Clear the current buffer and insert all the items into it
 function! mpc#insertListIntoBuffer(itemlist) abort
@@ -204,9 +209,9 @@ function! mpc#insertListIntoBuffer(itemlist) abort
       call append(line('$'), item)
     endif
   endfor
-endfunction
+endfunction "}}}
 
-" mpc#playlist()
+" mpc#playlist() {{{
 "
 " returns a list of songs that corresponds to the current playlist
 function! mpc#playlist() abort
@@ -223,9 +228,57 @@ function! mpc#playlist() abort
   endif
 
   return playlist
-endfunction
+endfunction "}}}
 
+" mpc#renderMpcView() {{{
+"
+" open the buffer mpc.mpdv
+"
+" mpc#renderMpcView(size)
+"
+" open the buffer mpc.mpdv with size
+function! mpc#renderMpcView(...) abort
+  if(bufexists('mpc.mpdv'))
+    let mpcwin = bufwinnr('mpc.mpdv')
+
+    if(mpcwin == -1)
+      execute "sbuffer " . bufnr('mpc.mpdv')
+    else
+      execute mpcwin . "wincmd w"
+    endif
+  else
+    execute "new mpc.mpdv"
+  endif
+
+  " size argument
+  if a:0
+    execute "resize " . a:1
+  endif
+endfunction "}}}
+
+" mpc#songToArray(song) {{{
+"
+" returns the song values ordered correctly
 function! mpc#songToArray(song) abort
-  let song_array = [a:song.position, a:song.artist, a:song.album, a:song.title]
-  return song_array
-endfunction
+  let song_values = [a:song.position, a:song.artist, a:song.album, a:song.title]
+  return song_values
+endfunction "}}}
+
+" mpc#newView(size) {{{
+"
+" creates a new view with size height
+" this view has its size constrained by min_size and max_size
+function! mpc#newView(size) abort
+  let max_size = winheight(0) * 3 / 5
+  let min_size = 5
+
+  if max_size < min_size
+    let max_size = min_size
+  endif
+
+  let view_size = a:size > max_size ? max_size : a:size
+
+  call mpc#renderMpcView(view_size)
+endfunction "}}}
+
+"}}}
