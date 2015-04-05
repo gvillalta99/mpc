@@ -25,16 +25,6 @@ function! mpc#TogglePlayback() "{{{
   echomsg message
 endfunction "}}}
 
-function! mpc#ToggleRandom() "{{{
-  let cmd = 'mpc random'
-  let result = split(split(system(cmd), '\n')[2], '   ')
-
-  let status = len(result) > 3 ? result[2] : result[0]
-  let message = status == "random: off" ? '[mpc] Random: off' : '[mpc] Random: on'
-
-  echomsg message
-endfunction "}}}
-
 function! mpc#ToggleRepeat() "{{{
   let cmd = 'mpc repeat'
   let result = split(split(system(cmd), '\n')[2], '   ')
@@ -286,6 +276,22 @@ endfunction "}}}
 function! mpc#songToArray(song) abort
   let song_values = [a:song.position, a:song.artist, a:song.album, a:song.title]
   return song_values
+endfunction "}}}
+
+" mpc#toggleRandom() {{{
+"
+" Toggle random
+function! mpc#toggleRandom()
+  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
+  let command   = "random"
+  let arguments = []
+  let results   = mpc#execute(options, command, arguments)
+  let result =  split(results[2], '   ')
+
+  let status = len(result) > 3 ? result[2] : result[0]
+  let message = status == "random: off" ? '[mpc] Random: off' : '[mpc] Random: on'
+
+  echomsg message
 endfunction "}}}
 
 "}}}

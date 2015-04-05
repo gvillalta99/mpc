@@ -3,7 +3,7 @@ setlocal buftype=nofile conceallevel=3 concealcursor=nvic textwidth=0 nonumber
 
 " Commands for mpdv buffer
 command! -buffer PlaySelectedSong call mpc#PlaySong(line('.'))
-command! -buffer ToggleRandom call mpc#ToggleRandom()
+command! -buffer ToggleRandom call mpc#toggleRandom()
 command! -buffer ToggleRepeat call mpc#ToggleRepeat()
 
 " Key mappings
