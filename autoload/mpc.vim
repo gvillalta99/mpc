@@ -7,18 +7,6 @@
 "     }}}
 "   }}}
 
-function! mpc#ViewPlaylist() abort "{{{
-  let playlist = mpc#formatPlaylist(mpc#playlist())
-  let itemlist = []
-
-  call mpc#newView(len(playlist))
-
-  for song in playlist
-    call add(itemlist, join(mpc#songToArray(song), " "))
-  endfor
-
-  call mpc#insertListIntoBuffer(itemlist)
-endfunction "}}}
 
 function! mpc#PlaySong(no) abort "{{{
   let song = split(getline(a:no), " ")
@@ -56,6 +44,25 @@ function! mpc#ToggleRepeat() "{{{
 
   echomsg message
 endfunction "}}}
+
+" Plugin views {{{
+
+" mpc#ViewPlaylist() {{{
+"
+" Shows the current playlist in mpc.mpdv buffer
+function! mpc#ViewPlaylist() abort
+  let playlist = mpc#formatPlaylist(mpc#playlist())
+  let itemlist = []
+
+  call mpc#newView(len(playlist))
+
+  for song in playlist
+    call add(itemlist, join(mpc#songToArray(song), " "))
+  endfor
+
+  call mpc#insertListIntoBuffer(itemlist)
+endfunction "}}}
+" }}}
 
 " New version of mpc {{{
 
@@ -211,6 +218,23 @@ function! mpc#insertListIntoBuffer(itemlist) abort
   endfor
 endfunction "}}}
 
+" mpc#newView(size) {{{
+"
+" creates a new view with size height
+" this view has its size constrained by min_size and max_size
+function! mpc#newView(size) abort
+  let max_size = winheight(0) * 3 / 5
+  let min_size = 5
+
+  if max_size < min_size
+    let max_size = min_size
+  endif
+
+  let view_size = a:size > max_size ? max_size : a:size
+
+  call mpc#renderMpcView(view_size)
+endfunction "}}}
+
 " mpc#playlist() {{{
 "
 " returns a list of songs that corresponds to the current playlist
@@ -262,23 +286,6 @@ endfunction "}}}
 function! mpc#songToArray(song) abort
   let song_values = [a:song.position, a:song.artist, a:song.album, a:song.title]
   return song_values
-endfunction "}}}
-
-" mpc#newView(size) {{{
-"
-" creates a new view with size height
-" this view has its size constrained by min_size and max_size
-function! mpc#newView(size) abort
-  let max_size = winheight(0) * 3 / 5
-  let min_size = 5
-
-  if max_size < min_size
-    let max_size = min_size
-  endif
-
-  let view_size = a:size > max_size ? max_size : a:size
-
-  call mpc#renderMpcView(view_size)
 endfunction "}}}
 
 "}}}
