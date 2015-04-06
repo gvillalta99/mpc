@@ -6,7 +6,29 @@
 "     title:    string }
 "     }}}
 "   }}}
-
+"
+" Views {{{
+"   Playlist {{{
+"   Structure:
+"     playlist: [
+"       song: [ position, artist, album, title ]
+"       song: [ position, artist, album, title ]
+"       ...
+"     ]
+"   }}}
+"   Single {{{
+"   Example:
+"11 @JAY Z/Beyoncé @Magna Carta... Holy Grail @Part II (On the Run)
+"[playing] #11/16   2:05/5:34 (37%)
+"volume: n/a   repeat: off   random: off   single: off   consume: off
+"   Structure:
+"     single: [
+"       song:     [ position, artist, album, title ]
+"       stats:    [status, pos/total, time/length, percent]
+"       controls: [ volume, repeat, random, single, consume]
+"     ]
+"   }}}
+" }}}
 
 function! mpc#PlaySong(no) abort "{{{
   let song = split(getline(a:no), " ")
