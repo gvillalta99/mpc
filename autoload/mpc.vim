@@ -5,6 +5,14 @@
 "     album:    string,
 "     title:    string }
 "     }}}
+"     Stats {{{
+"     {
+"       status: string,
+"       position: number,
+"       total: number,
+"       length: string
+"     }
+"     }}}
 "   }}}
 "
 " Views {{{
@@ -89,7 +97,7 @@ function! mpc#ViewSingle() abort
 endfunction "}}}
 " }}}
 
-" New version of mpc {{{
+" Functions {{{
 
 " mpc#appendListToBuffer(itemlist) {{{
 "
@@ -149,6 +157,21 @@ function! mpc#extractSongFromString(line) abort
         \     'album':    item[2],
         \     'title':    item[3]}
   return song
+endfunction "}}}
+
+" mpc#extractStatsFromString(line) {{{
+"
+" return a Stats data structure
+function! mpc#extractStatsFromString(line) abort
+  let [status, part1, part2, percent] = split(line, " ")
+  status = matchstr(status, "[a-z]\\+")
+  let [position, total] = split(part1, "/")
+  let [current_time, length] = split(part2, "/")
+
+  return { 'status': status,
+        \  'position': position,
+        \  'total': total,
+        \  'length': length }
 endfunction "}}}
 
 " mpc#formatPlaylist(playlist) {{{
@@ -345,10 +368,8 @@ function! mpc#singleToArray(single) abort
   let array_single = []
 
   if type(song) == type({})
-    echo "OK"
     call add(array_single, mpc#songToString(song))
   endif
-  echo array_single
 
   return array_single
 endfunction " }}}
