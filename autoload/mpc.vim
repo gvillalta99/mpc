@@ -152,10 +152,11 @@ endfunction "}}}
 " returns a Song data structure from line
 function! mpc#extractSongFromString(line) abort
   let item = split(a:line, " @")
-  let song = {'position': item[0],
-        \     'artist':   item[1],
-        \     'album':    item[2],
-        \     'title':    item[3]}
+  echo a:line
+  let song = {'position': get(item, 0, '0'),
+        \     'artist':   get(item, 1, 'No Artist'),
+        \     'album':    get(item, 2, 'No Album'),
+        \     'title':    get(item, 3, 'No Title')}
   return song
 endfunction "}}}
 
@@ -163,7 +164,7 @@ endfunction "}}}
 "
 " return a Stats data structure
 function! mpc#extractStatsFromString(line) abort
-  let [status, part1, part2, percent] = split(line, " ")
+  let [status, part1, part2, percent] = split(a:line, " ")
   status = matchstr(status, "[a-z]\\+")
   let [position, total] = split(part1, "/")
   let [current_time, length] = split(part2, "/")
