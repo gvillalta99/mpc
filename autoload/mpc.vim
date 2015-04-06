@@ -67,6 +67,20 @@ endfunction "}}}
 
 " Plugin views {{{
 
+" mpc#ViewSongList() {{{
+function! mpc#ViewSongList() abort
+  let playlist = mpc#formatPlaylist(mpc#listall())
+  let itemlist = []
+
+  for song in playlist
+    call add(itemlist, join(mpc#songToArray(song), " "))
+  endfor
+
+  call mpc#newView(len(itemlist))
+
+  call mpc#insertListIntoBuffer(itemlist)
+endfunction "}}}
+
 " mpc#ViewPlaylist() {{{
 "
 " Shows the current playlist in mpc.mpdv buffer
@@ -149,14 +163,28 @@ endfunction "}}}
 
 " mpc#extractSongFromString(line) {{{
 "
+" mpc#extractSongFromString(line, fields)
+"
 " returns a Song data structure from line
-function! mpc#extractSongFromString(line) abort
+function! mpc#extractSongFromString(line, ...) abort
   let item = split(a:line, " @")
-  echo a:line
-  let song = {'position': get(item, 0, '0'),
-        \     'artist':   get(item, 1, 'No Artist'),
-        \     'album':    get(item, 2, 'No Album'),
-        \     'title':    get(item, 3, 'No Title')}
+  let song = {}
+
+  if a:0
+    let fields = a:1
+    let total  = len(fields)
+    let i      = 0
+
+    while i < total
+      let song[fields[i]] = item[i]
+    endwhile
+  else
+    let song = {'position': get(item, 0, '0'),
+          \     'artist':   get(item, 1, 'No Artist'),
+          \     'album':    get(item, 2, 'No Album'),
+          \     'title':    get(item, 3, 'No Title')}
+  endif
+
   return song
 endfunction "}}}
 
@@ -297,6 +325,23 @@ function! mpc#insertListIntoBuffer(itemlist) abort
   endfor
 endfunction "}}}
 
+" mpc#listall {{{
+function! mpc#listall() abort
+  let options   = ["--format '%file% @%artist% @%album% @%title%'"]
+  let command   = "listall"
+  let arguments = []
+  let results   = mpc#execute(options, command, arguments)
+  let songlist  = []
+
+  let custom_fields = [ "file", "artist", "album", "title"]
+
+  for line in results
+    call add(songlist, mpc#extractSongFromString(line, custom_fields))
+  endfor
+
+  return songlist
+endfunction "}}}
+
 " mpc#newView(size) {{{
 "
 " creates a new view with size height
@@ -324,11 +369,9 @@ function! mpc#playlist() abort
   let results   = mpc#execute(options, command, arguments)
   let playlist  = []
 
-  if ! mpc#hasError(results)
-    for line in results
-      call add(playlist, mpc#extractSongFromString(line))
-    endfor
-  endif
+  for line in results
+    call add(playlist, mpc#extractSongFromString(line))
+  endfor
 
   return playlist
 endfunction "}}}
