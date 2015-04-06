@@ -67,14 +67,17 @@ endfunction "}}}
 
 " Plugin views {{{
 
-" mpc#ViewSongList() {{{
-function! mpc#ViewSongList() abort
-  let playlist = mpc#formatPlaylist(mpc#listall())
+" mpc#ViewSonglist() {{{
+function! mpc#ViewSonglist() abort
+  let playlist = mpc#formatSonglist(mpc#listall())
   let itemlist = []
 
-  for song in playlist
-    call add(itemlist, join(mpc#songToArray(song), " "))
-  endfor
+  let song_order = ['file', 'artist', 'album', 'title']
+  "for song in playlist
+  let song = playlist[10]
+
+  call add(itemlist, join(keys(song)," "))
+  call add(itemlist, join(mpc#songToArray(song, song_order), " "))
 
   call mpc#newView(len(itemlist))
 
@@ -167,7 +170,7 @@ endfunction "}}}
 "
 " returns a Song data structure from line
 function! mpc#extractSongFromString(line, ...) abort
-  let item = split(a:line, " @")
+  let items = split(a:line, " @")
   let song = {}
 
   if a:0
@@ -176,13 +179,14 @@ function! mpc#extractSongFromString(line, ...) abort
     let i      = 0
 
     while i < total
-      let song[fields[i]] = item[i]
+      let song[fields[i]] = get(items, i, 'No ' . fields[i])
+      let i = i + 1
     endwhile
   else
-    let song = {'position': get(item, 0, '0'),
-          \     'artist':   get(item, 1, 'No Artist'),
-          \     'album':    get(item, 2, 'No Album'),
-          \     'title':    get(item, 3, 'No Title')}
+    let song = {'position': get(items, 0, '0'),
+          \     'artist':   get(items, 1, 'No Artist'),
+          \     'album':    get(items, 2, 'No Album'),
+          \     'title':    get(items, 3, 'No Title')}
   endif
 
   return song
@@ -218,6 +222,20 @@ function! mpc#formatPlaylist(playlist) abort
   endif
 endfunction "}}}
 
+" mpc#formatSonglist(songlist) {{{
+function! mpc#formatSonglist(songlist) abort
+  if len(a:songlist) == 0
+    return []
+  else
+    let formated_songlist= []
+    let styleHash = { 'file' : { 'size': 20, 'b': '@fi', 'a': 'fi@' } }
+    for song in a:songlist
+      call add(formated_songlist, mpc#formatSong(song, styleHash))
+    endfor
+    return formated_songlist
+  endif
+endfunction "}}}
+
 " mpc#formatSingle(single) {{{
 "
 " returns a formated single
@@ -236,26 +254,33 @@ endfunction "}}}
 
 " mpc#formatSong(song) {{{
 "
+" mpc#formatSong(song, styleHash)
+"
 " returns a Song data structure with its fields formated
-function! mpc#formatSong(song) abort
-  let format_elements = { 'b_position': '',    'a_position': '',
-        \                 'b_artist':   '@ar', 'a_artist': 'ar@',
-        \                 'b_album':    '@al', 'a_album':  'al@',
-        \                 'b_title':    '@ti', 'a_title':  'ti@'}
-  let song_fields_length = { 'position':  5,
-        \                    'artist':   15,
-        \                    'album':    15,
-        \                    'title':    30}
+function! mpc#formatSong(song, ...) abort
+  let styleHash = {}
 
-  let raw_song = { 'position': mpc#formatStringField(a:song.position, song_fields_length.position),
-        \          'artist':   mpc#formatStringField(a:song.artist, song_fields_length.artist),
-        \          'album':    mpc#formatStringField(a:song.album, song_fields_length.album),
-        \          'title':    mpc#formatStringField(a:song.title, song_fields_length.title) }
+  let styleHash['position'] = { 'size': 5, 'b': '', 'a': '' }
+  let styleHash['artist'] =   { 'size': 15, 'b': '@ar', 'a': 'ar@' }
+  let styleHash['album'] =    { 'size': 15, 'b': '@al', 'a': 'al@' }
+  let styleHash['title'] =    { 'size': 30, 'b': '@ti', 'a': 'ti@' }
 
-  let song = { 'position': format_elements.b_position . raw_song.position . format_elements.a_position,
-        \      'artist':   format_elements.b_artist   . raw_song.artist   . format_elements.a_artist,
-        \      'album':    format_elements.b_album    . raw_song.album    . format_elements.a_album,
-        \      'title':    format_elements.b_title    . raw_song.title    . format_elements.a_title }
+  if a:0
+    let newStyleHash = a:1
+    call extend(styleHash, newStyleHash , "force")
+  endif
+
+  let raw_song = {}
+  for field in keys(styleHash)
+    if has_key(a:song, field)
+      let raw_song[field] = mpc#formatStringField(a:song[field], get(styleHash[field], 'size', 5))
+    endif
+  endfor
+
+  let song = {}
+  for field in keys(raw_song)
+    let song[field] = get(styleHash[field], 'b', '') . raw_song[field] . get(styleHash[field], 'a', '')
+  endfor
 
   return song
 endfunction "}}}
@@ -421,9 +446,17 @@ endfunction " }}}
 " mpc#songToArray(song) {{{
 "
 " returns the song values ordered correctly
-function! mpc#songToArray(song) abort
-  let song_values = [a:song.position, a:song.artist, a:song.album, a:song.title]
-  return song_values
+function! mpc#songToArray(song, ...) abort
+  let default_order = ['position', 'artist', 'album', 'title']
+  if a:0
+    let default_order = a:1
+  endif
+
+  let song_array = []
+  for field in default_order
+    call add(song_array, get(a:song, field, ''))
+  endfor
+  return song_array
 endfunction "}}}
 
 " mpc#songToString(song) {{{
