@@ -66,11 +66,24 @@ function! mpc#ViewPlaylist() abort
   let playlist = mpc#formatPlaylist(mpc#playlist())
   let itemlist = []
 
-  call mpc#newView(len(playlist))
-
   for song in playlist
     call add(itemlist, join(mpc#songToArray(song), " "))
   endfor
+
+  call mpc#newView(len(itemlist))
+
+  call mpc#insertListIntoBuffer(itemlist)
+endfunction "}}}
+
+" mpc#ViewSingle() {{{
+"
+" Shows the current song in mpc.mpdv buffer
+function! mpc#ViewSingle() abort
+  let current = mpc#current()
+  let formated_single = mpc#formatSingle(current)
+  let itemlist = mpc#singleToArray(formated_single)
+
+  call mpc#newView(len(itemlist))
 
   call mpc#insertListIntoBuffer(itemlist)
 endfunction "}}}
@@ -85,6 +98,20 @@ function! mpc#appendListToBuffer(itemlist) abort
   for item in a:itemlist
     call append(line('$'), item)
   endfor
+endfunction "}}}
+
+" mpc#current() {{{
+"
+" returns the current Single
+function! mpc#current() abort
+  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
+  let command   = "current"
+  let arguments = []
+  let results   = mpc#execute(options, command, arguments)
+  let song = mpc#extractSongFromString(results[0])
+  let single = { 'song': song }
+
+  return single
 endfunction "}}}
 
 " mpc#execute(options, command, arguments) {{{
@@ -137,6 +164,22 @@ function! mpc#formatPlaylist(playlist) abort
     endfor
     return formated_playlist
   endif
+endfunction "}}}
+
+" mpc#formatSingle(single) {{{
+"
+" returns a formated single
+function! mpc#formatSingle(single) abort
+  let song = get(a:single, 'song')
+  let stats = get(a:single, 'stats')
+  let controls = get(a:single, 'controls')
+  let single = {}
+
+  if type(song) == type({})
+    let single.song = mpc#formatSong(song)
+  endif
+
+  return single
 endfunction "}}}
 
 " mpc#formatSong(song) {{{
@@ -292,12 +335,39 @@ function! mpc#renderMpcView(...) abort
   endif
 endfunction "}}}
 
+" mpc#singleToArray(single) {{{
+"
+" returns a array with single information
+function! mpc#singleToArray(single) abort
+  let song = get(a:single, 'song')
+  let stats = get(a:single, 'stats')
+  let controls = get(a:single, 'controls')
+  let array_single = []
+
+  if type(song) == type({})
+    echo "OK"
+    call add(array_single, mpc#songToString(song))
+  endif
+  echo array_single
+
+  return array_single
+endfunction " }}}
+
 " mpc#songToArray(song) {{{
 "
 " returns the song values ordered correctly
 function! mpc#songToArray(song) abort
   let song_values = [a:song.position, a:song.artist, a:song.album, a:song.title]
   return song_values
+endfunction "}}}
+
+" mpc#songToString(song) {{{
+"
+" returns the string representation of the song
+function! mpc#songToString(song) abort
+  let song_array = mpc#songToArray(a:song)
+  let song_string = join(song_array, " ")
+  return song_string
 endfunction "}}}
 
 " mpc#toggleRandom() {{{
