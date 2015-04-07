@@ -91,6 +91,21 @@ endfunction "}}}
 
 "   mpc commands {{{
 
+" mpc#add(name) {{{
+"
+" Adds song to current playlist
+function! mpc#add(name) abort
+  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
+  let command   = "add"
+  let arguments = [a:name]
+  let results   = mpc#execute(options, command, arguments)
+
+  let message   = "[mpc] Path added to playlist: " . a:name
+
+  echomsg string(message)
+endfunction
+" }}}
+
 " mpc#current() {{{
 "
 " returns the current Single
@@ -152,8 +167,8 @@ endfunction "}}}
 " Plays song at position number
 function! mpc#play(number) abort
   let options   = ["--format '%position% @%artist% @%album% @%title%'"]
-  let command   = "play " . a:number
-  let arguments = []
+  let command   = "play "
+  let arguments = [a:number]
   let results   = mpc#execute(options, command, arguments)
   let song      = mpc#extractSongFromString(get(results, 0))
 
