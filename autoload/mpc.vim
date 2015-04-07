@@ -47,16 +47,6 @@ function! mpc#TogglePlayback() "{{{
   echomsg message
 endfunction "}}}
 
-function! mpc#ToggleRepeat() "{{{
-  let cmd = 'mpc repeat'
-  let result = split(split(system(cmd), '\n')[2], '   ')
-
-  let status = len(result) > 3 ? result[1] : result[0]
-  let message = status == "repeat: off" ? '[mpc] Repeat: off' : '[mpc] Repeat: on'
-
-  echomsg message
-endfunction "}}}
-
 " Plugin views {{{
 
 " mpc#ViewCurrent() {{{
@@ -214,6 +204,21 @@ function! mpc#toggleRandom()
 
   echomsg string(message)
 endfunction "}}}
+
+" mpc#toggleRepeat(){{{
+function! mpc#toggleRepeat() abort
+  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
+  let command   = "repeat"
+  let arguments = []
+  let results   = mpc#execute(options, command, arguments)
+  let result =  split(results[2], '   ')
+
+  let status = len(result) > 3 ? result[1] : result[0]
+  let message = status == "repeat: off" ? '[mpc] Repeat: off' : '[mpc] Repeat: on'
+
+  echomsg string(message)
+endfunction
+" }}}
 "   }}}
 
 "   Views support functions {{{
