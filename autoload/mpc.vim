@@ -72,14 +72,14 @@ function! mpc#ViewSonglist() abort
   let playlist = mpc#formatSonglist(mpc#listall())
   let itemlist = []
 
-  let song_order = ['file', 'artist', 'album', 'title']
-  "for song in playlist
-  let song = playlist[10]
+  let song_order = ['file']
 
-  call add(itemlist, join(keys(song)," "))
-  call add(itemlist, join(mpc#songToArray(song, song_order), " "))
+  for song in playlist
+    call add(itemlist,
+          \ join(mpc#songToArray(song, song_order), " "))
+  endfor
 
-  call mpc#newView(len(itemlist))
+  call mpc#newView(len(itemlist), "songlist.mpdv")
 
   call mpc#insertListIntoBuffer(itemlist)
 endfunction "}}}
@@ -95,15 +95,15 @@ function! mpc#ViewPlaylist() abort
     call add(itemlist, join(mpc#songToArray(song), " "))
   endfor
 
-  call mpc#newView(len(itemlist))
+  call mpc#newView(len(itemlist), "playlist.mpdv")
 
   call mpc#insertListIntoBuffer(itemlist)
 endfunction "}}}
 
-" mpc#ViewSingle() {{{
+" mpc#ViewCurrent() {{{
 "
 " Shows the current song in mpc.mpdv buffer
-function! mpc#ViewSingle() abort
+function! mpc#ViewCurrent() abort
   let current = mpc#current()
   let formated_single = mpc#formatSingle(current)
   let itemlist = mpc#singleToArray(formated_single)
@@ -228,7 +228,7 @@ function! mpc#formatSonglist(songlist) abort
     return []
   else
     let formated_songlist= []
-    let styleHash = { 'file' : { 'size': 20, 'b': '@fi', 'a': 'fi@' } }
+    let styleHash = { 'file' : { 'size': 0, 'b': '@fi', 'a': 'fi@' } }
     for song in a:songlist
       call add(formated_songlist, mpc#formatSong(song, styleHash))
     endfor
@@ -300,6 +300,8 @@ function! mpc#formatStringField(string, size, ...) abort
   if len(a:string) > a:size
     if a:size > 4
       return a:string[0:(a:size-4)] . ".. "
+    elseif a:size == 0
+      return a:string
     else
       return a:string[0:(a:size-1)] . " "
     endif
@@ -368,10 +370,11 @@ function! mpc#listall() abort
 endfunction "}}}
 
 " mpc#newView(size) {{{
+" mpc#newView(size, name)
 "
 " creates a new view with size height
 " this view has its size constrained by min_size and max_size
-function! mpc#newView(size) abort
+function! mpc#newView(size, ...) abort
   let max_size = winheight(0) * 3 / 5
   let min_size = 5
 
@@ -381,7 +384,11 @@ function! mpc#newView(size) abort
 
   let view_size = a:size > max_size ? max_size : a:size
 
-  call mpc#renderMpcView(view_size)
+  if a:0
+    call mpc#renderMpcView(view_size, a:1)
+  else
+    call mpc#renderMpcView(view_size)
+  endif
 endfunction "}}}
 
 " mpc#playlist() {{{
@@ -409,21 +416,30 @@ endfunction "}}}
 "
 " open the buffer mpc.mpdv with size
 function! mpc#renderMpcView(...) abort
-  if(bufexists('mpc.mpdv'))
-    let mpcwin = bufwinnr('mpc.mpdv')
+  let buffer_name = 'mpc.mpdv'
+  if a:0 >= 1
+    let size = a:1
+  endif
+
+  if a:0 == 2
+    let buffer_name = a:2
+  endif
+
+  if(bufexists(buffer_name))
+    let mpcwin = bufwinnr(buffer_name)
 
     if(mpcwin == -1)
-      execute "sbuffer " . bufnr('mpc.mpdv')
+      execute "sbuffer " . bufnr(buffer_name)
     else
       execute mpcwin . "wincmd w"
     endif
   else
-    execute "new mpc.mpdv"
+    execute "new " . buffer_name
   endif
 
   " size argument
-  if a:0
-    execute "resize " . a:1
+  if a:0 >= 1
+    execute "resize " . size
   endif
 endfunction "}}}
 
