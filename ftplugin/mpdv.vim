@@ -14,14 +14,24 @@ end
 
 " Key mappings {{{
 
-" Defaults {{{
+"   Defaults {{{
 au FileType mpdv nnoremap <silent><buffer> r :ToggleRandom<cr> :AirlineRefresh<cr>
 au FileType mpdv nnoremap <silent><buffer> e :ToggleRepeat<cr> :AirlineRefresh<cr>
 au FileType mpdv nnoremap <silent><buffer> q :bd!<cr>
 au FileType mpdv nnoremap <silent><buffer> p :TogglePlayback<cr> :AirlineRefresh<cr>
-"  }}}
+"   }}}
 
-"  Playlist {{{
-au FileType mpdv nnoremap <silent><buffer> <Enter> :PlaySelectedSong<cr> :AirlineRefresh<cr>
+"   Playlist {{{
+if bufname('%') == "playlist.mpdv"
+  au FileType mpdv nnoremap <silent><buffer> <Enter> :PlaySelectedSong<cr> :AirlineRefresh<cr>
+endif
+"   }}}
+"   Songlist {{{
+if bufname('%') == "songlist.mpdv"
+endif
+"   }}}
+"   Current {{{
+if bufname('%') == "songlist.mpdv"
+endif
 "   }}}
 "}}}
