@@ -67,19 +67,15 @@ endfunction "}}}
 
 " Plugin views {{{
 
-" mpc#ViewSonglist() {{{
-function! mpc#ViewSonglist() abort
-  let playlist = mpc#formatSonglist(mpc#listall())
-  let itemlist = []
+" mpc#ViewCurrent() {{{
+"
+" Shows the current song in mpc.mpdv buffer
+function! mpc#ViewCurrent() abort
+  let current = mpc#current()
+  let formated_single = mpc#formatSingle(current)
+  let itemlist = mpc#singleToArray(formated_single)
 
-  let song_order = ['file']
-
-  for song in playlist
-    call add(itemlist,
-          \ join(mpc#songToArray(song, song_order), " "))
-  endfor
-
-  call mpc#newView(len(itemlist), "songlist.mpdv")
+  call mpc#newView(len(itemlist), "current.mpdv")
 
   call mpc#insertListIntoBuffer(itemlist)
 endfunction "}}}
@@ -100,15 +96,19 @@ function! mpc#ViewPlaylist() abort
   call mpc#insertListIntoBuffer(itemlist)
 endfunction "}}}
 
-" mpc#ViewCurrent() {{{
-"
-" Shows the current song in mpc.mpdv buffer
-function! mpc#ViewCurrent() abort
-  let current = mpc#current()
-  let formated_single = mpc#formatSingle(current)
-  let itemlist = mpc#singleToArray(formated_single)
+" mpc#ViewSonglist() {{{
+function! mpc#ViewSonglist() abort
+  let playlist = mpc#formatSonglist(mpc#listall())
+  let itemlist = []
 
-  call mpc#newView(len(itemlist))
+  let song_order = ['file']
+
+  for song in playlist
+    call add(itemlist,
+          \ join(mpc#songToArray(song, song_order), " "))
+  endfor
+
+  call mpc#newView(len(itemlist), "songlist.mpdv")
 
   call mpc#insertListIntoBuffer(itemlist)
 endfunction "}}}
