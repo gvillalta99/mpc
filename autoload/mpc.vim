@@ -38,14 +38,6 @@
 "   }}}
 " }}}
 
-function! mpc#PlaySong(no) abort "{{{
-  let song = split(getline(a:no), " ")
-  let results = split(system("mpc --format '%title% (%artist%)' play " . song[0]), "\n")
-  let message = '[mpc] Now Playing: ' . results[0]
-
-  echomsg message
-endfunction "}}}
-
 function! mpc#TogglePlayback() "{{{
   let cmd = 'mpc toggle'
   let result = split(system(cmd), '\n')[1]
@@ -174,6 +166,22 @@ function! mpc#listall() abort
   return songlist
 endfunction "}}}
 
+" mpc#play(number) {{{
+"
+" Plays song at position number
+function! mpc#play(number) abort
+  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
+  let command   = "play " . a:number
+  let arguments = []
+  let results   = mpc#execute(options, command, arguments)
+  let song      = mpc#extractSongFromString(get(results, 0))
+
+  let message   = "[mpc] Now playing: " . mpc#songToString(song)
+
+  echomsg string(message)
+endfunction
+" }}}
+
 " mpc#playlist() {{{
 "
 " returns a list of songs that corresponds to the current playlist
@@ -204,7 +212,7 @@ function! mpc#toggleRandom()
   let status = len(result) > 3 ? result[2] : result[0]
   let message = status == "random: off" ? '[mpc] Random: off' : '[mpc] Random: on'
 
-  echomsg message
+  echomsg string(message)
 endfunction "}}}
 "   }}}
 
