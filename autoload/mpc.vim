@@ -116,14 +116,7 @@ endfunction "}}}
 
 " Functions {{{
 
-" mpc#appendListToBuffer(itemlist) {{{
-"
-" Append all the items in the `itemlist` to curent buffer
-function! mpc#appendListToBuffer(itemlist) abort
-  for item in a:itemlist
-    call append(line('$'), item)
-  endfor
-endfunction "}}}
+"   mpc commands {{{
 
 " mpc#current() {{{
 "
@@ -164,48 +157,140 @@ function! mpc#execute(options, command, arguments) abort
   endif
 endfunction "}}}
 
-" mpc#extractSongFromString(line) {{{
-"
-" mpc#extractSongFromString(line, fields)
-"
-" returns a Song data structure from line
-function! mpc#extractSongFromString(line, ...) abort
-  let items = split(a:line, " @")
-  let song = {}
+" mpc#listall {{{
+function! mpc#listall() abort
+  let options   = ["--format '%file% @%artist% @%album% @%title%'"]
+  let command   = "listall"
+  let arguments = []
+  let results   = mpc#execute(options, command, arguments)
+  let songlist  = []
 
-  if a:0
-    let fields = a:1
-    let total  = len(fields)
-    let i      = 0
+  let custom_fields = [ "file", "artist", "album", "title"]
 
-    while i < total
-      let song[fields[i]] = get(items, i, 'No ' . fields[i])
-      let i = i + 1
-    endwhile
-  else
-    let song = {'position': get(items, 0, '0'),
-          \     'artist':   get(items, 1, 'No Artist'),
-          \     'album':    get(items, 2, 'No Album'),
-          \     'title':    get(items, 3, 'No Title')}
+  for line in results
+    call add(songlist, mpc#extractSongFromString(line, custom_fields))
+  endfor
+
+  return songlist
+endfunction "}}}
+
+" mpc#playlist() {{{
+"
+" returns a list of songs that corresponds to the current playlist
+function! mpc#playlist() abort
+  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
+  let command   = "playlist"
+  let arguments = []
+  let results   = mpc#execute(options, command, arguments)
+  let playlist  = []
+
+  for line in results
+    call add(playlist, mpc#extractSongFromString(line))
+  endfor
+
+  return playlist
+endfunction "}}}
+
+" mpc#toggleRandom() {{{
+"
+" Toggle random
+function! mpc#toggleRandom()
+  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
+  let command   = "random"
+  let arguments = []
+  let results   = mpc#execute(options, command, arguments)
+  let result =  split(results[2], '   ')
+
+  let status = len(result) > 3 ? result[2] : result[0]
+  let message = status == "random: off" ? '[mpc] Random: off' : '[mpc] Random: on'
+
+  echomsg message
+endfunction "}}}
+"   }}}
+
+"   Views support functions {{{
+
+" mpc#appendListToBuffer(itemlist) {{{
+"
+" Append all the items in the `itemlist` to curent buffer
+function! mpc#appendListToBuffer(itemlist) abort
+  for item in a:itemlist
+    call append(line('$'), item)
+  endfor
+endfunction "}}}
+
+" mpc#insertListIntoBuffer(itemlist) {{{
+"
+" Clear the current buffer and insert all the items into it
+function! mpc#insertListIntoBuffer(itemlist) abort
+  for item in a:itemlist
+    if(item == a:itemlist[0])
+      execute "normal! 1GdGI" . item
+    else
+      call append(line('$'), item)
+    endif
+  endfor
+endfunction "}}}
+
+" mpc#newView(size) {{{
+" mpc#newView(size, name)
+"
+" creates a new view with size height
+" this view has its size constrained by min_size and max_size
+function! mpc#newView(size, ...) abort
+  let max_size = winheight(0) * 3 / 5
+  let min_size = 5
+
+  if max_size < min_size
+    let max_size = min_size
   endif
 
-  return song
+  let view_size = a:size > max_size ? max_size : a:size
+
+  if a:0
+    call mpc#renderMpcView(view_size, a:1)
+  else
+    call mpc#renderMpcView(view_size)
+  endif
 endfunction "}}}
 
-" mpc#extractStatsFromString(line) {{{
+" mpc#renderMpcView() {{{
 "
-" return a Stats data structure
-function! mpc#extractStatsFromString(line) abort
-  let [status, part1, part2, percent] = split(a:line, " ")
-  status = matchstr(status, "[a-z]\\+")
-  let [position, total] = split(part1, "/")
-  let [current_time, length] = split(part2, "/")
+" open the buffer mpc.mpdv
+"
+" mpc#renderMpcView(size)
+"
+" open the buffer mpc.mpdv with size
+function! mpc#renderMpcView(...) abort
+  let buffer_name = 'mpc.mpdv'
+  if a:0 >= 1
+    let size = a:1
+  endif
 
-  return { 'status': status,
-        \  'position': position,
-        \  'total': total,
-        \  'length': length }
+  if a:0 == 2
+    let buffer_name = a:2
+  endif
+
+  if(bufexists(buffer_name))
+    let mpcwin = bufwinnr(buffer_name)
+
+    if(mpcwin == -1)
+      execute "sbuffer " . bufnr(buffer_name)
+    else
+      execute mpcwin . "wincmd w"
+    endif
+  else
+    execute "new " . buffer_name
+  endif
+
+  " size argument
+  if a:0 >= 1
+    execute "resize " . size
+  endif
 endfunction "}}}
+"   }}}
+
+"   Data formatting {{{
 
 " mpc#formatPlaylist(playlist) {{{
 "
@@ -315,132 +400,51 @@ function! mpc#formatStringField(string, size, ...) abort
     endif
   endif
 endfunction "}}}
+"   }}}
 
-" mpc#hasError(result) {{{
+"   Data handling {{{
+
+" mpc#extractSongFromString(line) {{{
 "
-" Verifies if the result was an error
+" mpc#extractSongFromString(line, fields)
 "
-" 0 -> false
-" 1 -> true
-"
-" returns true if has a error
-" returns false otherwise
-function! mpc#hasError(result) abort
-  if type(a:result) == type([])
-    if len(a:result) == 0
-      return 0
-    else
-      return mpc#hasError(a:result[0])
-    endif
-  elseif type(a:result) == type(" ")
-    return a:result =~# '^error:'
-  else
-    return 0
-  endif
-endfunction "}}}
-
-" mpc#insertListIntoBuffer(itemlist) {{{
-"
-" Clear the current buffer and insert all the items into it
-function! mpc#insertListIntoBuffer(itemlist) abort
-  for item in a:itemlist
-    if(item == a:itemlist[0])
-      execute "normal! 1GdGI" . item
-    else
-      call append(line('$'), item)
-    endif
-  endfor
-endfunction "}}}
-
-" mpc#listall {{{
-function! mpc#listall() abort
-  let options   = ["--format '%file% @%artist% @%album% @%title%'"]
-  let command   = "listall"
-  let arguments = []
-  let results   = mpc#execute(options, command, arguments)
-  let songlist  = []
-
-  let custom_fields = [ "file", "artist", "album", "title"]
-
-  for line in results
-    call add(songlist, mpc#extractSongFromString(line, custom_fields))
-  endfor
-
-  return songlist
-endfunction "}}}
-
-" mpc#newView(size) {{{
-" mpc#newView(size, name)
-"
-" creates a new view with size height
-" this view has its size constrained by min_size and max_size
-function! mpc#newView(size, ...) abort
-  let max_size = winheight(0) * 3 / 5
-  let min_size = 5
-
-  if max_size < min_size
-    let max_size = min_size
-  endif
-
-  let view_size = a:size > max_size ? max_size : a:size
+" returns a Song data structure from line
+function! mpc#extractSongFromString(line, ...) abort
+  let items = split(a:line, " @")
+  let song = {}
 
   if a:0
-    call mpc#renderMpcView(view_size, a:1)
+    let fields = a:1
+    let total  = len(fields)
+    let i      = 0
+
+    while i < total
+      let song[fields[i]] = get(items, i, 'No ' . fields[i])
+      let i = i + 1
+    endwhile
   else
-    call mpc#renderMpcView(view_size)
+    let song = {'position': get(items, 0, '0'),
+          \     'artist':   get(items, 1, 'No Artist'),
+          \     'album':    get(items, 2, 'No Album'),
+          \     'title':    get(items, 3, 'No Title')}
   endif
+
+  return song
 endfunction "}}}
 
-" mpc#playlist() {{{
+" mpc#extractStatsFromString(line) {{{
 "
-" returns a list of songs that corresponds to the current playlist
-function! mpc#playlist() abort
-  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
-  let command   = "playlist"
-  let arguments = []
-  let results   = mpc#execute(options, command, arguments)
-  let playlist  = []
+" return a Stats data structure
+function! mpc#extractStatsFromString(line) abort
+  let [status, part1, part2, percent] = split(a:line, " ")
+  status = matchstr(status, "[a-z]\\+")
+  let [position, total] = split(part1, "/")
+  let [current_time, length] = split(part2, "/")
 
-  for line in results
-    call add(playlist, mpc#extractSongFromString(line))
-  endfor
-
-  return playlist
-endfunction "}}}
-
-" mpc#renderMpcView() {{{
-"
-" open the buffer mpc.mpdv
-"
-" mpc#renderMpcView(size)
-"
-" open the buffer mpc.mpdv with size
-function! mpc#renderMpcView(...) abort
-  let buffer_name = 'mpc.mpdv'
-  if a:0 >= 1
-    let size = a:1
-  endif
-
-  if a:0 == 2
-    let buffer_name = a:2
-  endif
-
-  if(bufexists(buffer_name))
-    let mpcwin = bufwinnr(buffer_name)
-
-    if(mpcwin == -1)
-      execute "sbuffer " . bufnr(buffer_name)
-    else
-      execute mpcwin . "wincmd w"
-    endif
-  else
-    execute "new " . buffer_name
-  endif
-
-  " size argument
-  if a:0 >= 1
-    execute "resize " . size
-  endif
+  return { 'status': status,
+        \  'position': position,
+        \  'total': total,
+        \  'length': length }
 endfunction "}}}
 
 " mpc#singleToArray(single) {{{
@@ -483,21 +487,31 @@ function! mpc#songToString(song) abort
   let song_string = join(song_array, " ")
   return song_string
 endfunction "}}}
+"   }}}
 
-" mpc#toggleRandom() {{{
+"   Helpers {{{
+
+" mpc#hasError(result) {{{
 "
-" Toggle random
-function! mpc#toggleRandom()
-  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
-  let command   = "random"
-  let arguments = []
-  let results   = mpc#execute(options, command, arguments)
-  let result =  split(results[2], '   ')
-
-  let status = len(result) > 3 ? result[2] : result[0]
-  let message = status == "random: off" ? '[mpc] Random: off' : '[mpc] Random: on'
-
-  echomsg message
+" Verifies if the result was an error
+"
+" 0 -> false
+" 1 -> true
+"
+" returns true if has a error
+" returns false otherwise
+function! mpc#hasError(result) abort
+  if type(a:result) == type([])
+    if len(a:result) == 0
+      return 0
+    else
+      return mpc#hasError(a:result[0])
+    endif
+  elseif type(a:result) == type(" ")
+    return a:result =~# '^error:'
+  else
+    return 0
+  endif
 endfunction "}}}
-
+"   }}}
 "}}}
