@@ -15,13 +15,13 @@ end
 " Key mappings {{{
 
 " Defaults {{{
-au FileType currentmpdv,songlistmpdv,playlistmpdv nnoremap <silent><buffer> r :ToggleRandom<cr> :AirlineRefresh<cr>
-au FileType currentmpdv,songlistmpdv,playlistmpdv nnoremap <silent><buffer> e :ToggleRepeat<cr> :AirlineRefresh<cr>
-au FileType currentmpdv,songlistmpdv,playlistmpdv nnoremap <silent><buffer> q :bd!<cr>
-au FileType currentmpdv,songlistmpdv,playlistmpdv nnoremap <silent><buffer> p :TogglePlayback<cr> :AirlineRefresh<cr>
+au FileType mpdv nnoremap <silent><buffer> r :ToggleRandom<cr> :AirlineRefresh<cr>
+au FileType mpdv nnoremap <silent><buffer> e :ToggleRepeat<cr> :AirlineRefresh<cr>
+au FileType mpdv nnoremap <silent><buffer> q :bd!<cr>
+au FileType mpdv nnoremap <silent><buffer> p :TogglePlayback<cr> :AirlineRefresh<cr>
 "  }}}
 
 "  Playlist {{{
-au FileType playlistmpdv nnoremap <silent><buffer> <Enter> :PlaySelectedSong<cr> :AirlineRefresh<cr>
+au FileType mpdv nnoremap <silent><buffer> <Enter> :PlaySelectedSong<cr> :AirlineRefresh<cr>
 "   }}}
 "}}}
