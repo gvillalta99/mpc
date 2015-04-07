@@ -2,7 +2,8 @@
 setlocal buftype=nofile conceallevel=3 concealcursor=nvic textwidth=0 nonumber
 
 " Commands for views
-command! -buffer AddPathToPlayList      call mpc#add(getline(line('.')))
+command! -buffer AddPathToPlaylist      call mpc#add(getline(line('.')))
+command! -buffer DeleteSongFromPlaylist call mpc#del(line('.'))
 command! -buffer PlaySelectedSong       call mpc#play(line('.'))
 command! -buffer TogglePlayback         call mpc#toggle()
 command! -buffer ToggleRandom           call mpc#toggleRandom()
@@ -16,7 +17,8 @@ end
 " Key mappings {{{
 
 "   Defaults {{{
-au FileType mpdv nnoremap <silent><buffer> a :AddPathToPlayList<cr>
+au FileType mpdv nnoremap <silent><buffer> a :AddPathToPlaylist<cr>
+au FileType mpdv nnoremap <silent><buffer> d :DeleteSongFromPlaylist<cr>
 au FileType mpdv nnoremap <silent><buffer> e :ToggleRepeat<cr> :AirlineRefresh<cr>
 au FileType mpdv nnoremap <silent><buffer> q :bd!<cr>
 au FileType mpdv nnoremap <silent><buffer> p :TogglePlayback<cr> :AirlineRefresh<cr>

@@ -69,8 +69,8 @@ function! mpc#ViewPlaylist() abort
   call mpc#insertListIntoBuffer(itemlist)
 endfunction "}}}
 
-" mpc#ViewSonglist() {{{
-function! mpc#ViewSonglist() abort
+" mpc#ViewSonglist(...) {{{
+function! mpc#ViewSonglist(...) abort
   let playlist = mpc#formatSonglist(mpc#listall())
   let itemlist = []
 
@@ -102,7 +102,21 @@ function! mpc#add(name) abort
 
   let message   = "[mpc] Path added to playlist: " . a:name
 
+  "Need to refresh playlist.mpdv
   echomsg string(message)
+endfunction
+" }}}
+
+" mpc#del(number) {{{
+"
+" Adds song to current playlist
+function! mpc#del(number) abort
+  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
+  let command   = "del"
+  let arguments = [a:number]
+  let results   = mpc#execute(options, command, arguments)
+
+  "Need to refresh playlist.mpdv
 endfunction
 " }}}
 
