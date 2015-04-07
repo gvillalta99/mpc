@@ -1,11 +1,3 @@
-function! OpenMPC()
-  call mpc#ViewPlaylist()
-endfunction
-
-function! LargestNumber(no1, no2)
-  return a:no1 == a:no2 ? 0 : a:no1 > a:no2 ? 1 : -1
-endfunction
-
 function! MpcAirlinePlugin(...)
   if &filetype == 'mpdv'
     let cmd = "mpc status"
@@ -57,4 +49,3 @@ else
 endif
 
 command! TogglePlayback call mpc#TogglePlayback()
-command! MpcBrowser call OpenMPC()
