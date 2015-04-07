@@ -38,15 +38,6 @@
 "   }}}
 " }}}
 
-function! mpc#TogglePlayback() "{{{
-  let cmd = 'mpc toggle'
-  let result = split(system(cmd), '\n')[1]
-
-  let message = '[mpc] '
-  let message .= split(result, ' ')[0] == '[paused]' ? 'Paused' : 'Playing'
-  echomsg message
-endfunction "}}}
-
 " Plugin views {{{
 
 " mpc#ViewCurrent() {{{
@@ -187,6 +178,21 @@ function! mpc#playlist() abort
   endfor
 
   return playlist
+endfunction "}}}
+
+" mpc#toggle() {{{
+"
+" Toggle playback
+function! mpc#toggle()
+  let options   = ["--format '%position% @%artist% @%album% @%title%'"]
+  let command   = "toggle"
+  let arguments = []
+  let results   = mpc#execute(options, command, arguments)
+  let song      = mpc#extractSongFromString(get(results, 0))
+
+  let message   = "[mpc] Now playing: " . mpc#songToString(song)
+
+  echomsg string(message)
 endfunction "}}}
 
 " mpc#toggleRandom() {{{

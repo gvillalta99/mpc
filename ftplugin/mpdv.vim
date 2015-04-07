@@ -5,7 +5,7 @@ setlocal buftype=nofile conceallevel=3 concealcursor=nvic textwidth=0 nonumber
 command! -buffer PlaySelectedSong call mpc#play(line('.'))
 command! -buffer ToggleRandom call mpc#toggleRandom()
 command! -buffer ToggleRepeat call mpc#toggleRepeat()
-command! -buffer TogglePlayback call mpc#TogglePlayback()
+command! -buffer TogglePlayback call mpc#toggle()
 
 " Status bar
 if !exists("g:loaded_airline") || !g:loaded_airline
