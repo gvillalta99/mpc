@@ -1,5 +1,5 @@
 function! mpc#airline#MpcAirlinePlugin(...)
-  if matchstr(&filetype, 'mpdv', -4)
+  if matchstr(&filetype, 'mpdv', -4) == "mpdv"
     let cmd = "mpc status"
     let result = split(system(cmd), "\n")
     if mpc#hasError(result)
