@@ -17,8 +17,6 @@ end
 " Key mappings {{{
 
 "   Defaults {{{
-au FileType mpdv nnoremap <silent><buffer> a :AddPathToPlaylist<cr>
-au FileType mpdv nnoremap <silent><buffer> d :DeleteSongFromPlaylist<cr>
 au FileType mpdv nnoremap <silent><buffer> e :ToggleRepeat<cr> :AirlineRefresh<cr>
 au FileType mpdv nnoremap <silent><buffer> q :bd!<cr>
 au FileType mpdv nnoremap <silent><buffer> p :TogglePlayback<cr> :AirlineRefresh<cr>
@@ -28,10 +26,12 @@ au FileType mpdv nnoremap <silent><buffer> r :ToggleRandom<cr> :AirlineRefresh<c
 "   Playlist {{{
 if bufname('%') == "playlist.mpdv"
   au FileType mpdv nnoremap <silent><buffer> <Enter> :PlaySelectedSong<cr> :AirlineRefresh<cr>
+  au FileType mpdv nnoremap <silent><buffer> d :DeleteSongFromPlaylist<cr>
 endif
 "   }}}
 "   Songlist {{{
 if bufname('%') == "songlist.mpdv"
+  au FileType mpdv nnoremap <silent><buffer> <Enter> :AddPathToPlaylist<cr> :AirlineRefresh<cr>
 endif
 "   }}}
 "   Current {{{
