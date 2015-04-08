@@ -97,7 +97,7 @@ endfunction "}}}
 function! mpc#add(name) abort
   let options   = ["--format '%position% @%artist% @%album% @%title%'"]
   let command   = "add"
-  let arguments = [a:name]
+  let arguments = [ mpc#unformatSonglistItem(a:name)]
   let results   = mpc#execute(options, command, arguments)
 
   let message   = "[mpc] Path added to playlist: " . a:name
@@ -448,6 +448,13 @@ function! mpc#formatStringField(string, size, ...) abort
     endif
   endif
 endfunction "}}}
+
+" mpc#unformatSonglistItem(item) {{{
+function! mpc#unformatSonglistItem(item) abort
+  let item = substitute(a:item, "@fi", "", "")
+  let item = substitute(item, "fi@", "", "")
+  return '"' . item . '"'
+endfunction "}}}
 "   }}}
 
 "   Data handling {{{
@@ -535,6 +542,7 @@ function! mpc#songToString(song) abort
   let song_string = join(song_array, " ")
   return song_string
 endfunction "}}}
+
 "   }}}
 
 "   Helpers {{{
