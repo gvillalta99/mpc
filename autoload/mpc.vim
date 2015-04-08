@@ -450,6 +450,8 @@ function! mpc#formatStringField(string, size, ...) abort
 endfunction "}}}
 
 " mpc#unformatSonglistItem(item) {{{
+"
+" returns the song file without formating tags
 function! mpc#unformatSonglistItem(item) abort
   let item = substitute(a:item, "@fi", "", "")
   let item = substitute(item, "fi@", "", "")
